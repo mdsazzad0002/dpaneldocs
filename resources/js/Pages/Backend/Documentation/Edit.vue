@@ -29,6 +29,7 @@ const form = useForm({
 const versionForm = useForm({
     version: '',
     changelog: '',
+    install_guide: '',
     archive: null,
 });
 
@@ -128,6 +129,7 @@ const formatSize = (bytes) => {
                                 <th class="px-3 py-2">File</th>
                                 <th class="px-3 py-2">Size</th>
                                 <th class="px-3 py-2">Downloads</th>
+                                <th class="px-3 py-2">Install Guide</th>
                                 <th class="px-3 py-2">Uploaded</th>
                                 <th class="px-3 py-2">Actions</th>
                             </tr>
@@ -138,6 +140,10 @@ const formatSize = (bytes) => {
                                 <td class="px-3 py-2 text-xs">{{ v.file_name }}</td>
                                 <td class="px-3 py-2 text-xs">{{ formatSize(v.file_size) }}</td>
                                 <td class="px-3 py-2 text-xs">{{ v.downloads }}</td>
+                                <td class="px-3 py-2 text-xs">
+                                    <span v-if="v.install_guide" class="text-emerald-600 dark:text-emerald-400">Yes</span>
+                                    <span v-else class="text-slate-400">—</span>
+                                </td>
                                 <td class="px-3 py-2 text-xs">{{ v.created_at }}</td>
                                 <td class="px-3 py-2">
                                     <button :disabled="deleteVersionForm.processing" class="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400" @click="removeVersion(v.id, v.version)">
@@ -146,7 +152,7 @@ const formatSize = (bytes) => {
                                 </td>
                             </tr>
                             <tr v-if="documentation.versions.length === 0">
-                                <td colspan="6" class="px-3 py-4 text-center text-slate-500">No versions uploaded yet.</td>
+                                <td colspan="7" class="px-3 py-4 text-center text-slate-500">No versions uploaded yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -166,6 +172,17 @@ const formatSize = (bytes) => {
                     <div class="sm:col-span-2">
                         <label class="mb-1 block text-sm">Changelog</label>
                         <textarea v-model="versionForm.changelog" rows="2" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"></textarea>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-sm">Installation Guide (optional)</label>
+                        <textarea
+                            v-model="versionForm.install_guide"
+                            rows="4"
+                            placeholder="e.g. # Install&#10;&#10;1. Download and extract the ZIP&#10;2. Run ./installer.sh&#10;3. Follow the on-screen prompts"
+                            class="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm dark:border-slate-700 dark:bg-slate-800"
+                        ></textarea>
+                        <p v-if="versionForm.errors.install_guide" class="mt-1 text-xs text-red-600">{{ versionForm.errors.install_guide }}</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Shown to visitors on the public download page for this version. Leave blank to show none.</p>
                     </div>
                     <div class="sm:col-span-2">
                         <button type="submit" :disabled="versionForm.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">

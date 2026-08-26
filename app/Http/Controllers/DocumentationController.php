@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateDocumentationJob;
 use App\Models\Category;
 use App\Models\Documentation;
 use App\Models\DocumentationVersion;
@@ -19,7 +20,7 @@ class DocumentationController extends Controller
     public function index(Request $request): Response
     {
         $actor = $request->user();
-        $canManage = (bool) $actor->is_admin;
+        $canManage = $actor->can('manage_documentation');
 
         $documentation = Documentation::query()
             ->when(! $canManage, fn ($query) => $query->where('submitted_by', $actor->id))
@@ -41,7 +42,7 @@ class DocumentationController extends Controller
             ])
             ->all();
 
-        return Inertia::render('Documentation/List', [
+        return Inertia::render('Backend/Documentation/List', [
             'documentation' => $documentation,
             'canManage' => $canManage,
         ]);
@@ -49,15 +50,46 @@ class DocumentationController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Documentation/Create', [
+        return Inertia::render('Backend/Documentation/Create', [
             'categories' => Category::orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    public function bulkGenerateCreate(): Response
+    {
+        return Inertia::render('Backend/Documentation/BulkGenerate');
+    }
+
+    public function bulkGenerateStore(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'topics' => ['required', 'string'],
+        ]);
+
+        $topics = collect(preg_split('/\r\n|\r|\n/', $validated['topics']))
+            ->map(fn (string $line) => trim($line))
+            ->filter()
+            ->unique()
+            ->take(30);
+
+        if ($topics->isEmpty()) {
+            return back()->withErrors(['topics' => 'Enter at least one topic, one per line.']);
+        }
+
+        foreach ($topics as $topic) {
+            GenerateDocumentationJob::dispatch($topic, $request->user()->id);
+        }
+
+        return redirect()->route('documentation.index')->with(
+            'success',
+            "Queued {$topics->count()} topic(s) for AI generation. Generated posts will appear here as pending review shortly."
+        );
     }
 
     public function store(Request $request): RedirectResponse
     {
         $actor = $request->user();
-        $canManage = (bool) $actor->is_admin;
+        $canManage = $actor->can('manage_documentation');
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:191'],
@@ -90,7 +122,7 @@ class DocumentationController extends Controller
         $doc = Documentation::with('versions')->findOrFail($id);
         $this->authorizeAccess($doc);
 
-        return Inertia::render('Documentation/Edit', [
+        return Inertia::render('Backend/Documentation/Edit', [
             'documentation' => [
                 'id' => $doc->id,
                 'title' => $doc->title,
@@ -104,6 +136,7 @@ class DocumentationController extends Controller
                     'id' => $v->id,
                     'version' => $v->version,
                     'changelog' => $v->changelog,
+                    'install_guide' => $v->install_guide,
                     'file_name' => $v->file_name,
                     'file_size' => $v->file_size,
                     'downloads' => $v->downloads,
@@ -111,7 +144,7 @@ class DocumentationController extends Controller
                 ]),
             ],
             'categories' => Category::orderBy('name')->get(['id', 'name']),
-            'canManage' => (bool) request()->user()->is_admin,
+            'canManage' => request()->user()->can('manage_documentation'),
         ]);
     }
 
@@ -119,7 +152,7 @@ class DocumentationController extends Controller
     {
         $doc = Documentation::findOrFail($id);
         $this->authorizeAccess($doc);
-        $canManage = (bool) $request->user()->is_admin;
+        $canManage = $request->user()->can('manage_documentation');
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:191'],
@@ -198,6 +231,7 @@ class DocumentationController extends Controller
                 Rule::unique('documentation_versions', 'version')->where('documentation_id', $doc->id),
             ],
             'changelog' => ['nullable', 'string', 'max:2000'],
+            'install_guide' => ['nullable', 'string', 'max:4000'],
             'archive' => ['required', 'file', 'mimes:zip', 'max:102400'], // 100 MB
         ]);
 
@@ -210,6 +244,7 @@ class DocumentationController extends Controller
             'documentation_id' => $doc->id,
             'version' => $validated['version'],
             'changelog' => $validated['changelog'] ?? null,
+            'install_guide' => $validated['install_guide'] ?? null,
             'file_path' => $path,
             'file_name' => $filename,
             'file_size' => $file->getSize(),
@@ -230,30 +265,48 @@ class DocumentationController extends Controller
         return redirect()->back()->with('success', "Version {$version->version} removed.");
     }
 
+    public function versionsIndex(Request $request): Response
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $versions = DocumentationVersion::query()
+            ->with('documentation:id,title,slug')
+            ->when($q !== '', fn ($query) => $query->whereHas(
+                'documentation',
+                fn ($inner) => $inner->where('title', 'like', "%{$q}%")
+            )->orWhere('version', 'like', "%{$q}%"))
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (DocumentationVersion $v): array => [
+                'id' => $v->id,
+                'documentation_id' => $v->documentation_id,
+                'post_title' => $v->documentation?->title,
+                'post_id' => $v->documentation?->id,
+                'version' => $v->version,
+                'changelog' => $v->changelog,
+                'file_name' => $v->file_name,
+                'file_size' => $v->file_size,
+                'downloads' => $v->downloads,
+                'created_at' => $v->created_at?->format('M j, Y'),
+            ]);
+
+        return Inertia::render('Backend/Documentation/Versions', [
+            'versions' => $versions,
+            'query' => $q,
+        ]);
+    }
+
     private function authorizeAccess(Documentation $doc): void
     {
         $actor = request()->user();
 
-        if (! $actor->is_admin && $doc->submitted_by !== $actor->id) {
+        if (! $actor->can('manage_documentation') && $doc->submitted_by !== $actor->id) {
             abort(BaseResponse::HTTP_FORBIDDEN, 'You do not have access to this documentation post.');
         }
     }
 
     private function uniqueSlug(string $title, ?string $ignoreId = null): string
     {
-        $base = Str::slug($title);
-        $slug = $base;
-        $i = 1;
-
-        while (
-            Documentation::query()
-                ->where('slug', $slug)
-                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-                ->exists()
-        ) {
-            $slug = $base.'-'.(++$i);
-        }
-
-        return $slug;
+        return Documentation::uniqueSlug($title, $ignoreId);
     }
 }

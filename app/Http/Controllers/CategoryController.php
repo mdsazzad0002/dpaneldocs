@@ -24,7 +24,7 @@ class CategoryController extends Controller
                 'post_count' => $category->documentation_count,
             ]);
 
-        return Inertia::render('Documentation/Categories', [
+        return Inertia::render('Backend/Documentation/Categories', [
             'categories' => $categories,
         ]);
     }
@@ -73,19 +73,6 @@ class CategoryController extends Controller
 
     private function uniqueSlug(string $name, ?string $ignoreId = null): string
     {
-        $base = Str::slug($name);
-        $slug = $base;
-        $i = 1;
-
-        while (
-            Category::query()
-                ->where('slug', $slug)
-                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-                ->exists()
-        ) {
-            $slug = $base.'-'.(++$i);
-        }
-
-        return $slug;
+        return Category::uniqueSlug($name, $ignoreId);
     }
 }

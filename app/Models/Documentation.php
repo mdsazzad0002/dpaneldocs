@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Documentation extends Model
 {
@@ -52,5 +53,23 @@ class Documentation extends Model
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
+    }
+
+    public static function uniqueSlug(string $title, ?string $ignoreId = null): string
+    {
+        $base = Str::slug($title);
+        $slug = $base;
+        $i = 1;
+
+        while (
+            self::query()
+                ->where('slug', $slug)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $base.'-'.(++$i);
+        }
+
+        return $slug;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,16 +29,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? array_merge($user->toArray(), [
+                    'is_admin' => $user->hasRole('admin'),
+                    'can_manage_documentation' => $user->can('manage_documentation'),
+                    'can_manage_versions' => $user->can('manage_versions'),
+                    'can_manage_categories' => $user->can('manage_categories'),
+                    'can_manage_users' => $user->can('manage_users'),
+                    'can_manage_roles' => $user->can('manage_roles'),
+                ]) : null,
             ],
-            'docCategories' => fn () => Category::query()
-                ->whereHas('documentation', fn ($q) => $q->published())
-                ->withCount(['documentation as post_count' => fn ($q) => $q->published()])
-                ->orderBy('name')
-                ->get(['id', 'name', 'slug']),
         ];
     }
 }

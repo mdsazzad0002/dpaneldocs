@@ -2,22 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Documentation;
 use App\Models\DocumentationVersion;
+use App\Support\MarkdownLite;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DocumentationPublicController extends Controller
 {
-    public function index(): Response
+    public function landing(): View
     {
+        return view('public.landing', [
+            'stats' => [
+                'posts' => Documentation::published()->count(),
+                'categories' => Category::query()->whereHas('documentation', fn ($q) => $q->published())->count(),
+                'views' => (int) Documentation::published()->sum('views'),
+            ],
+        ]);
+    }
+
+    public function index(Request $request): View
+    {
+        return $this->renderList($request, null);
+    }
+
+    public function category(Request $request, string $slug): View
+    {
+        $category = Category::where('slug', $slug)->firstOrFail();
+
+        return $this->renderList($request, $category);
+    }
+
+    private function renderList(Request $request, ?Category $category): View
+    {
+        $q = trim((string) $request->query('q', ''));
+
         $posts = Documentation::published()
             ->with('category:id,name')
+            ->when($category, fn ($query) => $query->where('category_id', $category->id))
+            ->when($q !== '', fn ($query) => $query->where(function ($inner) use ($q) {
+                $inner->where('title', 'like', "%{$q}%")->orWhere('excerpt', 'like', "%{$q}%");
+            }))
             ->orderByDesc('created_at')
             ->get(['id', 'title', 'slug', 'category_id', 'excerpt', 'views', 'created_at'])
             ->map(fn (Documentation $doc): array => [
@@ -29,37 +59,77 @@ class DocumentationPublicController extends Controller
                 'created_at' => $doc->created_at?->format('M j, Y'),
             ]);
 
-        return Inertia::render('Documentation/PublicIndex', [
+        $title = $category ? "{$category->name} — Documentation" : ($q !== '' ? "Search: {$q}" : 'Documentation');
+
+        return view('public.docs.index', [
             'posts' => $posts,
-            'categories' => $posts->pluck('category')->filter()->unique()->values(),
+            'sidebar' => $this->sidebarNav(),
+            'activeCategory' => $category?->name,
+            'query' => $q,
+            'seoTitle' => "{$title} — dPanel",
+            'seoDescription' => $category
+                ? "Browse dPanel documentation in the {$category->name} category."
+                : 'Browse all dPanel documentation — guides, release notes, and downloadable versions.',
+            'canonical' => $category
+                ? route('docs.public.category', ['slug' => $category->slug])
+                : route('docs.public.index'),
         ]);
     }
 
-    public function show(string $slug): Response
+    public function show(string $slug): View
     {
         $doc = Documentation::published()->with('category:id,name')->where('slug', $slug)->firstOrFail();
         $doc->increment('views');
 
-        return Inertia::render('Documentation/PublicShow', [
+        $blocks = MarkdownLite::parse($doc->content);
+        $toc = MarkdownLite::tableOfContents($blocks);
+
+        return view('public.docs.show', [
             'post' => [
                 'title' => $doc->title,
                 'slug' => $doc->slug,
                 'category' => $doc->category?->name,
                 'excerpt' => $doc->excerpt,
-                'content' => $doc->content,
                 'views' => $doc->views,
                 'created_at' => $doc->created_at?->format('M j, Y'),
+                'updated_at' => $doc->updated_at,
+                'created_at_iso' => $doc->created_at,
                 'versions' => $doc->versions->map(fn (DocumentationVersion $v): array => [
                     'id' => $v->id,
                     'version' => $v->version,
                     'changelog' => $v->changelog,
+                    'install_guide' => $v->install_guide,
                     'file_name' => $v->file_name,
                     'file_size' => $v->file_size,
                     'downloads' => $v->downloads,
                     'created_at' => $v->created_at?->format('M j, Y'),
                 ]),
             ],
+            'blocks' => $blocks,
+            'toc' => $toc,
+            'sidebar' => $this->sidebarNav(),
+            'seoTitle' => "{$doc->title} — dPanel Docs",
+            'seoDescription' => $doc->excerpt ?: "Documentation for {$doc->title} on dPanel.",
+            'canonical' => route('docs.public.show', ['slug' => $doc->slug]),
         ]);
+    }
+
+    private function sidebarNav()
+    {
+        return Category::query()
+            ->with(['documentation' => fn ($q) => $q->published()->orderBy('title')->select(['id', 'title', 'slug', 'category_id'])])
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn (Category $category): array => [
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'posts' => $category->documentation->map(fn (Documentation $doc): array => [
+                    'title' => $doc->title,
+                    'slug' => $doc->slug,
+                ])->values(),
+            ])
+            ->filter(fn (array $category): bool => count($category['posts']) > 0)
+            ->values();
     }
 
     public function download(string $slug, string $versionId): BinaryFileResponse

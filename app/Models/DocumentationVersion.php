@@ -15,7 +15,7 @@ class DocumentationVersion extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id', 'documentation_id', 'version', 'changelog',
+        'id', 'documentation_id', 'version', 'changelog', 'install_guide',
         'file_path', 'file_name', 'file_size', 'downloads',
     ];
 

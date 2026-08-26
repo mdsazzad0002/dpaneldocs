@@ -7,7 +7,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { useTheme } from '@/theme';
 
 const page = usePage();
-const isAdmin = computed(() => !!page.props.auth?.user?.is_admin);
+const can = (permission) => !!page.props.auth?.user?.[`can_${permission}`];
 
 const showingSidebar = ref(false);
 const { isDark, toggle: toggleTheme } = useTheme();
@@ -25,11 +25,29 @@ const navItems = computed(() => [
         active: () => route().current('documentation.*'),
         icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     },
-    ...(isAdmin.value ? [{
+    ...(can('manage_versions') ? [{
+        label: 'Versions',
+        routeName: 'documentation.versions.index',
+        active: () => route().current('documentation.versions.index'),
+        icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
+    }] : []),
+    ...(can('manage_categories') ? [{
         label: 'Categories',
         routeName: 'categories.index',
         active: () => route().current('categories.*'),
         icon: 'M7 7h.01M7 3h5.586a1 1 0 01.707.293l7.414 7.414a1 1 0 010 1.414l-7.586 7.586a1 1 0 01-1.414 0L4.293 12.293A1 1 0 014 11.586V5a2 2 0 012-2z',
+    }] : []),
+    ...(can('manage_users') ? [{
+        label: 'Users',
+        routeName: 'users.index',
+        active: () => route().current('users.*'),
+        icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4',
+    }] : []),
+    ...(can('manage_roles') ? [{
+        label: 'Roles',
+        routeName: 'roles.index',
+        active: () => route().current('roles.*'),
+        icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
     }] : []),
     {
         label: 'Profile',

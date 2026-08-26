@@ -63,7 +63,10 @@ const reject = (id) => {
                 {{ page.props.flash.error }}
             </div>
 
-            <div class="flex items-center justify-end">
+            <div class="flex items-center justify-end gap-2">
+                <Link :href="route('documentation.bulk-generate')" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800">
+                    Bulk Generate (AI)
+                </Link>
                 <Link :href="route('documentation.create')" class="rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
                     New Post
                 </Link>
