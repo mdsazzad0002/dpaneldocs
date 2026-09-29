@@ -1,6 +1,24 @@
 # Changelog
 
-All notable changes to Dpanel are documented here.
+All notable changes to the dPanel website are documented here.
+
+## [0.2.0] - 2026-09-29
+
+### Changed
+- Documentation is now static Markdown in `resources/docs`, imported from the dPanel repository (`php artisan docs:sync`).
+- Redesigned public site: home page, docs with sidebar, table of contents, search, and prev/next navigation.
+- Full SEO metadata, JSON-LD structured data, sitemap, and robots rules.
+
+### Added
+- Help center with support tickets, private customer ticket links, and email notifications.
+- Public reviews with moderation and aggregate star ratings.
+- "Was this page helpful?" feedback on every docs page.
+- Admin help desk for tickets, reviews, and page feedback; `php artisan helpdesk:admin`.
+- Privacy Policy, Terms of Use, and a custom 404 page.
+
+### Removed
+- Documentation CMS: posts, categories, AI generation, and version/ZIP management, including the `/api/v1/versions` API.
+- Public registration and user/role management screens.
 
 ## [0.1.0] - 2026-08-26
 

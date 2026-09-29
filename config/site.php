@@ -1,0 +1,120 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Public site settings
+|--------------------------------------------------------------------------
+|
+| The documentation pages are static Markdown files in resources/docs. The
+| "docs" list below is the sidebar: its order is the reading order, and a
+| page only appears on the site (and in the sitemap) when it is listed here.
+| Refresh the Markdown from a dPanel checkout with `php artisan docs:sync`.
+|
+*/
+
+return [
+
+    'name' => env('APP_NAME', 'dPanel'),
+
+    'tagline' => 'Free, self-hosted web hosting control panel',
+
+    'description' => 'dPanel is a free, self-hosted web hosting control panel built on Laravel, Vue, and Rust. Manage websites, databases, email, DNS, SSL, and backups on your own Linux server.',
+
+    'support_email' => env('SUPPORT_EMAIL', 'dev@dengrweb.com'),
+
+    'security_email' => env('SECURITY_EMAIL', 'dev@dengrweb.com'),
+
+    'company' => [
+        'name' => 'D Engr Web',
+        'url' => 'https://dengrweb.com',
+        'facebook' => 'https://www.facebook.com/dengrweblimited/',
+    ],
+
+    'repositories' => [
+        'panel' => 'https://github.com/mdsazzad0002/dpanel',
+        'docs' => 'https://github.com/mdsazzad0002/dpaneldocs',
+    ],
+
+    'install_command' => "curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o installer.sh\nchmod +x installer.sh\nsudo ./installer.sh",
+
+    'docs' => [
+        'Getting started' => [
+            'installation' => [
+                'title' => 'Installation',
+                'description' => 'Install dPanel on a fresh Linux server, choose a release, and set up website file permissions.',
+            ],
+            'architecture' => [
+                'title' => 'Architecture',
+                'description' => 'How the Laravel panel, the drust privileged API, and the Rust edge gateway fit together.',
+            ],
+            'operations' => [
+                'title' => 'Operations',
+                'description' => 'Everyday dPanel commands, rebuilds, updates, and troubleshooting steps.',
+            ],
+        ],
+        'Reference' => [
+            'dscript' => [
+                'title' => 'dscript CLI',
+                'description' => 'The dpanel command-line tool: chains, modules, scripts, dry runs, and recovery.',
+            ],
+            'drust-service' => [
+                'title' => 'drust Service',
+                'description' => 'Install, configure, and run the root-owned drust execution service.',
+            ],
+            'drust-api' => [
+                'title' => 'drust API',
+                'description' => 'Endpoint reference for the localhost-only drust execution API used by the panel.',
+            ],
+            'backups' => [
+                'title' => 'Backups',
+                'description' => 'Schedule dPanel backups, upload them to remote storage, and restore them.',
+            ],
+            'ssh-command-runner' => [
+                'title' => 'Server Task Runner',
+                'description' => 'SSH connector, command safety rules, and task reports in the Server Task Runner.',
+            ],
+            'whmcs' => [
+                'title' => 'WHMCS Integration',
+                'description' => 'Connect dPanel to WHMCS billing with signed API calls and single sign-on.',
+            ],
+        ],
+        'Project' => [
+            'contributing' => [
+                'title' => 'Contributing',
+                'description' => 'Clone dPanel, run the installer from your checkout, and open a pull request.',
+            ],
+            'security' => [
+                'title' => 'Security Policy',
+                'description' => 'How to report dPanel security issues privately and harden a public server.',
+            ],
+        ],
+    ],
+
+    'faq' => [
+        [
+            'q' => 'Is dPanel really free?',
+            'a' => 'Yes. Every user gets the same software, the same features, and the same updates. There are no license fees, no feature locks, and no subscriptions. Paid help is available only if you ask for it.',
+        ],
+        [
+            'q' => 'What server do I need?',
+            'a' => 'A fresh Linux server you control with sudo or root access, ports 80 and 443 open to the internet, and a domain name for the panel, for example panel.example.com.',
+        ],
+        [
+            'q' => 'How do I update dPanel?',
+            'a' => 'Run "sudo ./installer.sh update". The installer downloads the release straight from GitHub and records the installed version in the panel .env file.',
+        ],
+        [
+            'q' => 'Can I migrate from cPanel or CyberPanel?',
+            'a' => 'Yes. dPanel can import backups from cPanel and CyberPanel, and also restores its own portable backup packages.',
+        ],
+        [
+            'q' => 'Can I sell hosting with dPanel?',
+            'a' => 'Yes. You may run dPanel and sell hosting services with it. You may not redistribute, rebrand, or resell the software itself without written permission.',
+        ],
+        [
+            'q' => 'How do I report a security problem?',
+            'a' => 'Please do not open a public issue. Follow the Security Policy and report it privately by email.',
+        ],
+    ],
+
+];

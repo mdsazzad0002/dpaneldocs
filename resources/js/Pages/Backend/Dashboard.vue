@@ -1,14 +1,25 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import Stars from '@/Components/Stars.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
+
+const props = defineProps({
+    stats: Object,
+    recentTickets: Array,
+    pendingReviews: Array,
+});
 
 const page = usePage();
 
-const stats = [
-    { label: 'Documentation Posts', value: '—', hint: 'View and manage', href: 'documentation.index', accent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-    { label: 'Public Docs Site', value: '/docs', hint: 'Browse published docs', href: 'docs.public.index', accent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-    { label: 'Your Profile', value: page.props.auth.user.name, hint: 'Account settings', href: 'profile.edit', accent: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
+const cards = [
+    { label: 'Open tickets', value: props.stats.open_tickets, hint: `${props.stats.tickets_total} total`, href: route('admin.tickets.index', { status: 'open' }) },
+    { label: 'Reviews to moderate', value: props.stats.pending_reviews, hint: 'Waiting for approval', href: route('admin.reviews.index') },
+    { label: 'Average rating', value: props.stats.rating.count ? props.stats.rating.average.toFixed(1) : '—', hint: `${props.stats.rating.count} published reviews`, href: route('admin.reviews.index', { status: 'approved' }) },
+    { label: 'Docs found helpful', value: props.stats.feedback_helpful === null ? '—' : `${props.stats.feedback_helpful}%`, hint: `${props.stats.feedback_total} votes`, href: route('admin.feedback.index') },
 ];
+
+const when = (date) => new Date(date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 </script>
 
 <template>
@@ -16,29 +27,63 @@ const stats = [
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Dashboard</h2>
+            <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Help desk</h2>
         </template>
 
         <div class="space-y-6">
-            <div class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+            <div>
                 <h1 class="text-xl font-semibold">Welcome back, {{ page.props.auth.user.name }}</h1>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Here's a quick overview of your panel.</p>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Tickets, reviews, and documentation feedback from the public site.</p>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Link
-                    v-for="stat in stats"
-                    :key="stat.label"
-                    :href="route(stat.href)"
-                    class="group rounded-xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                    v-for="card in cards"
+                    :key="card.label"
+                    :href="card.href"
+                    class="rounded-xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
-                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold" :class="stat.accent">
-                        {{ stat.label.charAt(0) }}
-                    </div>
-                    <div class="text-sm text-slate-500 dark:text-slate-400">{{ stat.label }}</div>
-                    <div class="mt-1 text-lg font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ stat.value }}</div>
-                    <div class="mt-1 text-xs text-slate-400">{{ stat.hint }}</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400">{{ card.label }}</div>
+                    <div class="mt-2 text-3xl font-bold tracking-tight">{{ card.value }}</div>
+                    <div class="mt-1 text-xs text-slate-400">{{ card.hint }}</div>
                 </Link>
+            </div>
+
+            <div class="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+                <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                        <h3 class="font-semibold">Recent tickets</h3>
+                        <Link :href="route('admin.tickets.index')" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">View all</Link>
+                    </div>
+                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <li v-for="ticket in recentTickets" :key="ticket.id">
+                            <Link :href="route('admin.tickets.show', ticket.id)" class="flex items-center gap-4 px-5 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium">{{ ticket.subject }}</p>
+                                    <p class="text-xs text-slate-500">{{ ticket.reference }} · {{ ticket.name }} · {{ when(ticket.last_activity_at) }}</p>
+                                </div>
+                                <StatusBadge v-if="ticket.priority === 'high'" status="high">urgent</StatusBadge>
+                                <StatusBadge :status="ticket.status" />
+                            </Link>
+                        </li>
+                        <li v-if="!recentTickets.length" class="px-5 py-10 text-center text-sm text-slate-500">No tickets yet.</li>
+                    </ul>
+                </section>
+
+                <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                        <h3 class="font-semibold">Reviews awaiting approval</h3>
+                        <Link :href="route('admin.reviews.index')" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">Moderate</Link>
+                    </div>
+                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <li v-for="review in pendingReviews" :key="review.id" class="px-5 py-3">
+                            <Stars :value="review.rating" />
+                            <p class="truncate text-sm font-medium">{{ review.title }}</p>
+                            <p class="text-xs text-slate-500">{{ review.name }}</p>
+                        </li>
+                        <li v-if="!pendingReviews.length" class="px-5 py-10 text-center text-sm text-slate-500">All caught up.</li>
+                    </ul>
+                </section>
             </div>
         </div>
     </AuthenticatedLayout>
