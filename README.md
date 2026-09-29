@@ -1,58 +1,49 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# dPanel website
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+The public website for [dPanel](https://github.com/mdsazzad0002/dpanel), the free, self-hosted web hosting control panel:
+product pages, documentation, and a help desk.
 
-## About Laravel
+There is nothing to manage day to day. The documentation is **static Markdown** that ships with the code, and the only
+data the site stores is what visitors send in: support tickets, reviews, and "was this page helpful?" feedback.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What's inside
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Area | Where | Notes |
+| --- | --- | --- |
+| Home, legal pages | `resources/views/public` | Blade, server-rendered for SEO |
+| Documentation | `resources/docs/*.md` | Listed and ordered in `config/site.php` |
+| Help center + tickets | `/support` | Customers follow tickets through a private emailed link, no account |
+| Reviews | `/reviews` | Held for moderation, then published with star-rating structured data |
+| Help desk (admin) | `/dashboard`, `/admin/*` | Inertia + Vue; answer tickets, moderate reviews, read page feedback |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+SEO: per-page titles, descriptions, canonical URLs, Open Graph/Twitter tags, JSON-LD (Organization, WebSite search,
+SoftwareApplication with aggregate rating, TechArticle, BreadcrumbList, FAQPage), `sitemap.xml`, and `robots.txt`.
+Ticket pages and the admin area are `noindex`.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer setup                                 # install, .env, key, migrate, build assets
+php artisan helpdesk:admin you@example.com     # create an admin, prints a password
+composer dev                                   # local development
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Set `APP_URL`, the `MAIL_*` settings, and `SUPPORT_EMAIL` in `.env` so ticket emails are delivered.
 
-## Contributing
+## Updating the documentation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Docs come from the dPanel repository. Pull the latest into this site with:
 
-## Code of Conduct
+```bash
+php artisan docs:sync /path/to/dpanel
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Or edit `resources/docs/<page>.md` directly. To add a page, create the Markdown file and add it to `docs` in
+`config/site.php`. Links written for GitHub (`installation.md#requirements`, `../SECURITY.md`) are rewritten to site
+URLs automatically. Rendered pages are cached until the file changes.
 
-## Security Vulnerabilities
+## Tests
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is source-available software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan test
+```

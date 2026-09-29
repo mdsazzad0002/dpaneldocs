@@ -6,6 +6,57 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html {
+    scroll-padding-top: 5.5rem;
+}
+
+/*
+ * Rendered Markdown (documentation pages). Written by hand rather than with
+ * a typography plugin so the docs match the rest of the site exactly.
+ */
+@layer components {
+    .doc-prose {
+        @apply text-[15.5px] leading-7 text-slate-700 dark:text-slate-300;
+    }
+    .doc-prose > :first-child { @apply mt-0; }
+    .doc-prose h2 { @apply mt-12 mb-4 scroll-mt-24 border-b border-slate-200 pb-2 text-2xl font-bold tracking-tight text-slate-900 dark:border-slate-800 dark:text-white; }
+    .doc-prose h3 { @apply mt-9 mb-3 scroll-mt-24 text-xl font-semibold text-slate-900 dark:text-white; }
+    .doc-prose h4 { @apply mt-7 mb-2 scroll-mt-24 text-base font-semibold text-slate-900 dark:text-white; }
+    .doc-prose .heading-anchor { @apply ml-2 font-normal text-slate-300 no-underline opacity-0 transition hover:text-blue-600 dark:text-slate-600; }
+    .doc-prose :is(h2, h3, h4):hover .heading-anchor { @apply opacity-100; }
+    .doc-prose p { @apply my-4; }
+    .doc-prose a:not(.heading-anchor) { @apply font-medium text-blue-600 underline decoration-blue-600/30 underline-offset-2 hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-400/30; }
+    .doc-prose strong { @apply font-semibold text-slate-900 dark:text-white; }
+    .doc-prose ul { @apply my-4 list-disc space-y-1.5 pl-6 marker:text-slate-400; }
+    .doc-prose ol { @apply my-4 list-decimal space-y-1.5 pl-6 marker:text-slate-400; }
+    .doc-prose li > :is(ul, ol) { @apply my-1.5; }
+    .doc-prose hr { @apply my-10 border-slate-200 dark:border-slate-800; }
+    .doc-prose blockquote { @apply my-6 rounded-r-lg border-l-4 border-blue-500 bg-blue-50/70 px-5 py-1 text-slate-700 dark:bg-blue-950/30 dark:text-slate-300; }
+    .doc-prose :not(pre) > code { @apply rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-800 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200; }
+    .doc-prose pre { @apply relative my-6 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-4 pr-16 font-mono text-[13px] leading-6 text-slate-100 shadow-sm; }
+    .doc-prose pre code { @apply font-mono; }
+    .doc-prose td code { @apply whitespace-nowrap; }
+    .doc-prose table { @apply my-6 block w-full overflow-x-auto border-collapse text-sm; }
+    .doc-prose th { @apply border-b-2 border-slate-200 bg-slate-50 px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white; }
+    .doc-prose td { @apply border-b border-slate-200 px-3 py-2 align-top dark:border-slate-800; }
+    .doc-prose img { @apply my-6 rounded-lg border border-slate-200 dark:border-slate-800; }
+
+    .copy-button { @apply absolute right-2 top-2 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 font-sans text-xs font-medium text-slate-300 opacity-0 transition hover:bg-slate-700 hover:text-white focus:opacity-100; }
+    .doc-prose pre:hover .copy-button { @apply opacity-100; }
+
+    [data-toc] a.is-active { @apply border-blue-600 font-medium text-blue-600 dark:border-blue-400 dark:text-blue-400; }
+
+    .star { @apply cursor-pointer text-3xl leading-none text-slate-300 transition dark:text-slate-700; }
+    .star.is-on { @apply text-amber-400; }
+
+    .field { @apply block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900; }
+    .field-label { @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300; }
+    .field-error { @apply mt-1.5 text-sm text-red-600 dark:text-red-400; }
+    .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950; }
+    .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800; }
 }

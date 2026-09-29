@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Review;
+use App\Models\SupportTicket;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,19 +32,21 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $isAdmin = $user?->hasRole('admin') ?? false;
 
         return [
             ...parent::share($request),
+            'appName' => config('site.name'),
             'auth' => [
-                'user' => $user ? array_merge($user->toArray(), [
-                    'is_admin' => $user->hasRole('admin'),
-                    'can_manage_documentation' => $user->can('manage_documentation'),
-                    'can_manage_versions' => $user->can('manage_versions'),
-                    'can_manage_categories' => $user->can('manage_categories'),
-                    'can_manage_users' => $user->can('manage_users'),
-                    'can_manage_roles' => $user->can('manage_roles'),
-                ]) : null,
+                'user' => $user ? array_merge($user->toArray(), ['is_admin' => $isAdmin]) : null,
             ],
+            'flash' => [
+                'status' => fn () => $request->session()->get('status'),
+            ],
+            'badges' => fn () => $isAdmin ? [
+                'tickets' => SupportTicket::where('status', 'open')->count(),
+                'reviews' => Review::where('status', 'pending')->count(),
+            ] : [],
         ];
     }
 }
