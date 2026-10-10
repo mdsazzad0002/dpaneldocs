@@ -101,6 +101,70 @@
             @endif
         </form>
 
+        {{-- Comments --}}
+        <section id="comments" class="mt-10 scroll-mt-24">
+            <h2 class="text-xl font-bold tracking-tight">Questions &amp; comments <span class="text-base font-normal text-slate-500">({{ $comments->count() }})</span></h2>
+
+            @if ($comments->isNotEmpty())
+                <ol class="mt-5 space-y-4">
+                    @foreach ($comments as $comment)
+                        <li id="comment-{{ $comment->id }}" class="scroll-mt-24 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                            <p class="text-sm">
+                                <span class="font-semibold">{{ $comment->name }}</span>
+                                <time class="text-slate-500" datetime="{{ $comment->created_at->toIso8601String() }}"> · {{ $comment->created_at->format('M j, Y') }}</time>
+                            </p>
+                            <p class="mt-2 whitespace-pre-line break-words text-sm leading-6 text-slate-700 dark:text-slate-300">{{ $comment->body }}</p>
+
+                            @foreach ($comment->replies as $reply)
+                                <div class="mt-4 rounded-lg border-l-4 {{ $reply->is_staff ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/30' : 'border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900' }} px-4 py-3">
+                                    <p class="text-sm">
+                                        <span class="font-semibold">{{ $reply->name }}</span>
+                                        @if ($reply->is_staff)
+                                            <span class="ml-1 rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Team</span>
+                                        @endif
+                                        <time class="text-slate-500" datetime="{{ $reply->created_at->toIso8601String() }}"> · {{ $reply->created_at->format('M j, Y') }}</time>
+                                    </p>
+                                    <p class="mt-1.5 whitespace-pre-line break-words text-sm leading-6 text-slate-700 dark:text-slate-300">{{ $reply->body }}</p>
+                                </div>
+                            @endforeach
+                        </li>
+                    @endforeach
+                </ol>
+            @endif
+
+            @if (session('comment'))
+                <p class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200" role="status">{{ session('comment') }}</p>
+            @else
+                <form action="{{ route('docs.comments.store') }}" method="POST" class="mt-5 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+                    @csrf
+                    <input type="hidden" name="page" value="{{ $page['slug'] }}">
+                    <div class="hidden" aria-hidden="true"><label>Leave empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+                    <p class="text-sm font-medium">Ask a question or leave a note about this page</p>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="comment-name" class="field-label">Name</label>
+                            <input id="comment-name" name="name" value="{{ old('name') }}" required maxlength="80" autocomplete="name" class="field">
+                            @error('name')<p class="field-error">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label for="comment-email" class="field-label">Email <span class="font-normal text-slate-500">(private, for our reply)</span></label>
+                            <input id="comment-email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email" class="field">
+                            @error('email')<p class="field-error">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                    <div>
+                        <label for="comment-body" class="field-label">Comment</label>
+                        <textarea id="comment-body" name="body" rows="4" required minlength="5" maxlength="3000" class="field" placeholder="What would you like to know?">{{ old('body') }}</textarea>
+                        @error('body')<p class="field-error">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <p class="text-xs text-slate-500">Comments appear after a quick check. Need private help? <a href="{{ route('support.index') }}#ticket" class="underline">Open a ticket</a>.</p>
+                        <button type="submit" class="btn-primary">Post comment</button>
+                    </div>
+                </form>
+            @endif
+        </section>
+
         <nav class="mt-8 grid gap-4 sm:grid-cols-2" aria-label="Pagination">
             @if ($page['previous'])
                 <a href="{{ route('docs.show', $page['previous']['slug']) }}" rel="prev" class="group rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 dark:border-slate-800 dark:hover:border-blue-700">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Review;
 use App\Support\Docs;
+use App\Support\Donations;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -18,6 +19,7 @@ class SitemapController extends Controller
             ['loc' => route('docs.index'), 'lastmod' => $siteUpdated, 'priority' => '0.9'],
             ['loc' => route('support.index'), 'lastmod' => null, 'priority' => '0.7'],
             ['loc' => route('reviews.index'), 'lastmod' => $reviewsUpdated ? strtotime($reviewsUpdated) : null, 'priority' => '0.6'],
+            ...(Donations::goal()['enabled'] ? [['loc' => route('donate.index'), 'lastmod' => null, 'priority' => '0.5']] : []),
             ['loc' => route('privacy'), 'lastmod' => null, 'priority' => '0.2'],
             ['loc' => route('terms'), 'lastmod' => null, 'priority' => '0.2'],
         ]);

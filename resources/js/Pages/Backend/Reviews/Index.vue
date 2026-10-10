@@ -1,8 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
+import ReplyBox from '@/Components/ReplyBox.vue';
 import Stars from '@/Components/Stars.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps({
     reviews: Object,
@@ -22,6 +24,14 @@ const setStatus = (review, status) => router.patch(route('admin.reviews.update',
 const destroy = (review) => {
     if (confirm('Delete this review permanently?')) {
         router.delete(route('admin.reviews.destroy', review.id), { preserveScroll: true });
+    }
+};
+
+const replying = ref(null);
+
+const removeReply = (review) => {
+    if (confirm('Remove the public response to this review?')) {
+        router.post(route('admin.reviews.reply', review.id), { reply: '' }, { preserveScroll: true });
     }
 };
 
@@ -66,9 +76,33 @@ const when = (date) => new Date(date).toLocaleDateString(undefined, { dateStyle:
                         · <a :href="`mailto:${review.email}`" class="hover:underline">{{ review.email }}</a>
                         <template v-if="review.ip_address"> · {{ review.ip_address }}</template>
                     </p>
+                    <div v-if="review.reply && replying !== review.id" class="mt-4 rounded-lg border-l-4 border-blue-500 bg-blue-50/70 px-4 py-3 text-sm dark:bg-blue-950/30">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300">Your public response</p>
+                        <p class="mt-1 whitespace-pre-line text-slate-700 dark:text-slate-300">{{ review.reply }}</p>
+                        <div class="mt-2 flex gap-3 text-xs">
+                            <button type="button" class="font-medium text-blue-600 hover:underline dark:text-blue-400" @click="replying = review.id">Edit</button>
+                            <button type="button" class="font-medium text-red-600 hover:underline" @click="removeReply(review)">Remove</button>
+                        </div>
+                    </div>
+                    <div v-if="replying === review.id" class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                        <ReplyBox
+                            :action="route('admin.reviews.reply', review.id)"
+                            field="reply"
+                            :initial="review.reply ?? ''"
+                            ai-type="review"
+                            :ai-id="review.id"
+                            :email="review.email"
+                            placeholder="Public response shown under the review…"
+                            submit-label="Save response"
+                            :reset-on-success="false"
+                            @done="replying = null"
+                        />
+                    </div>
                     <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                         <button v-if="review.status !== 'approved'" type="button" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700" @click="setStatus(review, 'approved')">Approve &amp; publish</button>
                         <button v-if="review.status !== 'rejected'" type="button" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800" @click="setStatus(review, 'rejected')">{{ review.status === 'approved' ? 'Unpublish' : 'Reject' }}</button>
+                        <button v-if="!review.reply && replying !== review.id" type="button" class="rounded-lg border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/40" @click="replying = review.id">Respond</button>
+                        <button v-if="replying === review.id" type="button" class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800" @click="replying = null">Cancel</button>
                         <button type="button" class="ml-auto rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" @click="destroy(review)">Delete</button>
                     </div>
                 </article>

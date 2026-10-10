@@ -1,39 +1,38 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
-use App\Support\Docs;
+use App\Support\DocsSync;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 
-Artisan::command('docs:sync {source : Path to a dpanel repository checkout}', function (string $source) {
-    $source = rtrim($source, '/');
-
-    if (! is_dir($source.'/docs')) {
+Artisan::command('docs:sync {source? : Path to a dpanel repository checkout (default: download from GitHub)} {--branch= : GitHub branch to download from}', function (?string $source = null) {
+    if ($source !== null && ! is_dir(rtrim($source, '/').'/docs')) {
         $this->error("No docs/ directory found in [{$source}].");
 
         return 1;
     }
 
-    // Site page slug => file in the dpanel repository.
-    $map = collect(config('site.docs', []))
-        ->flatMap(fn ($pages) => array_keys($pages))
-        ->mapWithKeys(fn ($slug) => [$slug => Docs::sourceFile($slug)]);
+    $sync = $source !== null
+        ? DocsSync::fromDirectory($source)
+        : DocsSync::fromGitHub(branch: $this->option('branch') ?: null);
 
-    foreach ($map as $slug => $file) {
-        if (! is_file($source.'/'.$file)) {
-            $this->warn("Skipped {$slug}: {$file} not found.");
-
-            continue;
-        }
-
-        File::copy($source.'/'.$file, Docs::path($slug));
-        $this->line("Synced <info>{$slug}</info> from {$file}");
+    foreach ($sync->changed as $slug) {
+        $this->line("Updated <info>{$slug}</info>");
     }
 
-    $this->info('Documentation synced. Rendered pages refresh automatically.');
-})->purpose('Copy the documentation Markdown from a dpanel checkout into resources/docs');
+    foreach ($sync->skipped as $slug) {
+        $this->warn("Skipped {$slug}: ".DocsSync::files()[$slug].' not found.');
+    }
+
+    if ($sync->status === 'failed') {
+        $this->error($sync->message ?? 'Sync failed.');
+
+        return 1;
+    }
+
+    $this->info(count($sync->changed).' page(s) updated from '.$sync->source.'. Rendered pages refresh automatically.');
+})->purpose('Copy the documentation Markdown from GitHub or a dpanel checkout into resources/docs');
 
 Artisan::command('helpdesk:admin {email} {--name=Admin}', function (string $email) {
     $password = Str::password(16);
@@ -42,10 +41,9 @@ Artisan::command('helpdesk:admin {email} {--name=Admin}', function (string $emai
         'name' => $this->option('name'),
         'password' => $password,
         'email_verified_at' => now(),
+        'role_id' => Role::where('slug', 'admin')->value('id'),
     ]);
 
-    $user->assignRole(Role::findOrCreate('admin', 'web'));
-
-    $this->info("Admin ready: {$email}");
+    $this->info("Admin ready: {$user->email}");
     $this->line("Password: <comment>{$password}</comment> (change it from the Profile page)");
-})->purpose('Create or reset a help desk administrator account');
+})->purpose('Create or reset an administrator account');

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'email', 'company', 'rating', 'title', 'body', 'status', 'ip_address', 'approved_at'])]
+#[Fillable(['name', 'email', 'company', 'rating', 'title', 'body', 'reply', 'status', 'ip_address', 'approved_at', 'replied_at'])]
 #[Hidden(['email', 'ip_address'])]
 class Review extends Model
 {
@@ -18,6 +18,7 @@ class Review extends Model
         return [
             'rating' => 'integer',
             'approved_at' => 'datetime',
+            'replied_at' => 'datetime',
         ];
     }
 

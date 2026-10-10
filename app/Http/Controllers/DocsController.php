@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Comment;
 use App\Support\Docs;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -25,6 +26,12 @@ class DocsController extends Controller
             'page' => $page,
             'sections' => Docs::sections(),
             'sourceUrl' => Docs::sourceUrl($slug),
+            'comments' => Comment::approved()
+                ->where('page', $slug)
+                ->whereNull('parent_id')
+                ->with(['replies' => fn ($q) => $q->approved()])
+                ->oldest()
+                ->get(),
         ]);
     }
 

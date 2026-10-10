@@ -2,6 +2,20 @@
 
 All notable changes to the dPanel website are documented here.
 
+## [0.3.0] - 2026-10-10
+
+### Added
+- Admin panel sections: docs comments, mail (compose + sent log), documentation sync with history, donations, users, roles & permissions, and settings; grouped, collapsible sidebar.
+- Comments on documentation pages, moderated, with public staff replies that can also be emailed.
+- Public responses to reviews.
+- `/donate` page: "Buy me a laptop / PC" goal with progress, bank and mobile-banking details, and donation reports that staff verify (with a thank-you email).
+- SMTP settings editable in the panel, with a test email.
+- AI reply drafts (Claude) for tickets, comments, reviews and emails.
+- `php artisan docs:sync` without a path downloads the docs from GitHub.
+
+### Changed
+- Roles and permissions are built in; `spatie/laravel-permission` was removed. Existing admins keep the Administrator role.
+
 ## [0.2.0] - 2026-09-29
 
 ### Changed

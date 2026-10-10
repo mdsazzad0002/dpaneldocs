@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AiAssist from '@/Components/AiAssist.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -90,6 +91,7 @@ const when = (date) => new Date(date).toLocaleString(undefined, { dateStyle: 'me
                     />
                     <p v-if="form.errors.body" class="mt-1 text-sm text-red-600">{{ form.errors.body }}</p>
                     <div class="mt-4 flex flex-wrap items-center justify-end gap-3">
+                        <AiAssist v-model="form.body" type="ticket" :id="ticket.id" class="mr-auto" />
                         <label class="text-sm text-slate-500">
                             Then set status
                             <select v-model="form.status" class="ml-2 rounded-lg border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm dark:border-slate-700 dark:bg-slate-950">
@@ -131,6 +133,10 @@ const when = (date) => new Date(date).toLocaleString(undefined, { dateStyle: 'me
                     <div>
                         <dt class="text-xs uppercase tracking-wider text-slate-500">Customer link</dt>
                         <dd><button type="button" class="text-blue-600 hover:underline dark:text-blue-400" @click="copyLink">{{ copied ? 'Copied!' : 'Copy private link' }}</button></dd>
+                    </div>
+                    <div v-if="$page.props.auth.can['mail.send']">
+                        <dt class="text-xs uppercase tracking-wider text-slate-500">Email</dt>
+                        <dd><Link :href="route('admin.mail.index', { to: ticket.email, name: ticket.name, subject: `Re: [${ticket.reference}] ${ticket.subject}` })" class="text-blue-600 hover:underline dark:text-blue-400">Write a separate email</Link></dd>
                     </div>
                 </dl>
 

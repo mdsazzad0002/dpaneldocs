@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Support\Outbox;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -40,6 +41,48 @@ class ReviewController extends Controller
         ]);
 
         return back()->with('status', 'Review '.$data['status'].'.');
+    }
+
+    /**
+     * Publish (or clear) the team's public response to a review, and
+     * optionally email it to the reviewer.
+     */
+    public function reply(Request $request, Review $review): RedirectResponse
+    {
+        $data = $request->validate([
+            'reply' => ['nullable', 'string', 'max:3000'],
+            'notify' => ['boolean'],
+        ]);
+
+        $reply = trim((string) ($data['reply'] ?? ''));
+
+        $review->update([
+            'reply' => $reply !== '' ? $reply : null,
+            'replied_at' => $reply !== '' ? now() : null,
+        ]);
+
+        if ($reply === '') {
+            return back()->with('status', 'Response removed.');
+        }
+
+        if ($request->boolean('notify')) {
+            $mail = Outbox::send(
+                $review->email,
+                'We replied to your review of '.config('site.name'),
+                $reply,
+                $request->user(),
+                $review->name,
+                'review:'.$review->id,
+                $review->status === 'approved' ? 'See it on the reviews page' : null,
+                $review->status === 'approved' ? route('reviews.index') : null,
+            );
+
+            return back()->with('status', $mail->status === 'sent'
+                ? 'Response saved and emailed to '.$review->email.'.'
+                : 'Response saved, but the email could not be sent. Check the mail settings.');
+        }
+
+        return back()->with('status', 'Response saved.');
     }
 
     public function destroy(Review $review): RedirectResponse
