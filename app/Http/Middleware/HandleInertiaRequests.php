@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Comment;
+use App\Models\Donation;
 use App\Models\Review;
 use App\Models\SupportTicket;
 use Illuminate\Http\Request;
@@ -32,21 +34,27 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $isAdmin = $user?->hasRole('admin') ?? false;
+        $isStaff = $user?->isStaff() ?? false;
 
         return [
             ...parent::share($request),
             'appName' => config('site.name'),
             'auth' => [
-                'user' => $user ? array_merge($user->toArray(), ['is_admin' => $isAdmin]) : null,
+                'user' => $user ? array_merge($user->toArray(), [
+                    'is_staff' => $isStaff,
+                    'role' => $user->role?->name,
+                ]) : null,
+                'can' => $user ? $user->permissionMap() : [],
             ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],
-            'badges' => fn () => $isAdmin ? [
-                'tickets' => SupportTicket::where('status', 'open')->count(),
-                'reviews' => Review::where('status', 'pending')->count(),
-            ] : [],
+            'badges' => fn () => $isStaff ? array_filter([
+                'tickets' => $user->hasPermission('tickets.manage') ? SupportTicket::where('status', 'open')->count() : null,
+                'reviews' => $user->hasPermission('reviews.manage') ? Review::where('status', 'pending')->count() : null,
+                'comments' => $user->hasPermission('comments.manage') ? Comment::where('status', 'pending')->count() : null,
+                'donations' => $user->hasPermission('donations.manage') ? Donation::where('status', 'pending')->count() : null,
+            ]) : [],
         ];
     }
 }

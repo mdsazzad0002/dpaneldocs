@@ -56,6 +56,10 @@ $$('[data-copy]').forEach((button) => {
     button.addEventListener('click', () => copy($(button.dataset.copy).innerText, button));
 });
 
+$$('[data-copy-text]').forEach((button) => {
+    button.addEventListener('click', () => copy(button.dataset.copyText, button));
+});
+
 // Highlight the table-of-contents entry for the section being read
 const tocLinks = $$('[data-toc] a');
 if (tocLinks.length && 'IntersectionObserver' in window) {

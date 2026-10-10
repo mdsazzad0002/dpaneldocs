@@ -24,7 +24,6 @@ return new class extends Migration
                 'manage_documentation', 'manage_versions', 'manage_categories', 'manage_users', 'manage_roles',
             ])->delete();
             DB::table('roles')->whereIn('name', ['editor', 'contributor'])->delete();
-            app()['cache']->forget(config('permission.cache.key'));
         }
 
         Schema::create('reviews', function (Blueprint $table) {

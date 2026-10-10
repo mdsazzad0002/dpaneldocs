@@ -35,6 +35,9 @@ return [
         'docs' => 'https://github.com/mdsazzad0002/dpaneldocs',
     ],
 
+    // Branch of the dPanel repository that "Sync docs" pulls from.
+    'docs_branch' => env('DOCS_BRANCH', 'main'),
+
     'install_command' => "curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o installer.sh\nchmod +x installer.sh\nsudo ./installer.sh",
 
     'docs' => [

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +42,20 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Give the user one of the roles created by the migrations (admin, support, editor).
+     */
+    public function role(string $slug): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::where('slug', $slug)->value('id'),
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->role('admin');
     }
 }

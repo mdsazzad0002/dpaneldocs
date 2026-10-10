@@ -9,6 +9,9 @@
         ['label' => 'Support', 'route' => 'support.index', 'active' => request()->routeIs('support.*')],
         ['label' => 'Reviews', 'route' => 'reviews.index', 'active' => request()->routeIs('reviews.*')],
     ];
+    if (rescue(fn () => \App\Support\Donations::setting('donation.enabled') === '1', false, false)) {
+        $nav[] = ['label' => 'Donate', 'route' => 'donate.index', 'active' => request()->routeIs('donate.*')];
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -176,6 +179,9 @@
                     <ul class="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-400">
                         <li><a href="{{ config('site.repositories.panel') }}" target="_blank" rel="noopener" class="hover:text-blue-600 dark:hover:text-blue-400">GitHub</a></li>
                         <li><a href="{{ config('site.repositories.panel') }}/issues" target="_blank" rel="noopener" class="hover:text-blue-600 dark:hover:text-blue-400">Issue tracker</a></li>
+                        @if (collect($nav)->contains('route', 'donate.index'))
+                            <li><a href="{{ route('donate.index') }}" class="hover:text-blue-600 dark:hover:text-blue-400">Donate</a></li>
+                        @endif
                         <li><a href="{{ route('docs.show', 'contributing') }}" class="hover:text-blue-600 dark:hover:text-blue-400">Contributing</a></li>
                         <li><a href="{{ config('site.company.facebook') }}" target="_blank" rel="noopener" class="hover:text-blue-600 dark:hover:text-blue-400">Facebook</a></li>
                     </ul>

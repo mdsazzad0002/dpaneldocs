@@ -10,7 +10,6 @@ use App\Notifications\TicketStaffNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class HelpDeskTest extends TestCase
@@ -19,10 +18,7 @@ class HelpDeskTest extends TestCase
 
     private function admin(): User
     {
-        $user = User::factory()->create();
-        $user->assignRole(Role::findOrCreate('admin', 'web'));
-
-        return $user;
+        return User::factory()->admin()->create();
     }
 
     private function openTicket(): SupportTicket
