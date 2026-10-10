@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Review;
 use App\Support\Docs;
+use App\Support\Donations;
 use Illuminate\View\View;
 
 class PageController extends Controller
@@ -14,6 +15,7 @@ class PageController extends Controller
             'sections' => Docs::sections(),
             'reviews' => Review::approved()->where('rating', '>=', 4)->latest('approved_at')->limit(3)->get(),
             'rating' => Review::summary(),
+            'pcs' => Donations::setting('donation.enabled') === '1' ? config('site.pcs') : [],
         ]);
     }
 

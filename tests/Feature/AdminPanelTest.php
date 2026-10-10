@@ -259,6 +259,7 @@ class AdminPanelTest extends TestCase
 
         $this->get(route('donate.index'))->assertNotFound();
         $this->get(route('home'))->assertDontSee(route('donate.index'));
+        $this->get(route('donate.pc', array_key_first(config('site.pcs'))))->assertNotFound();
     }
 
     public function test_smtp_settings_override_the_env_mailer_and_keep_the_password_secret(): void

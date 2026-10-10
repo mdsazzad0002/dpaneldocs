@@ -18,6 +18,24 @@ supported way to set up and repair website file permissions.
 - A fresh Linux server you control, with `sudo` or root access
 - Ports `80` and `443` open to the internet
 - A domain name for the panel (for example `panel.example.com`)
+- Ubuntu 22.04 or newer, Debian 12, or a RHEL-family distribution
+
+No extra configuration is needed for Ubuntu 22.04. Its packages are too old in
+five places, and the installer handles each one:
+
+| Tool | Ubuntu 22.04 package | What the installer uses |
+| --- | --- | --- |
+| PHP 8.2+ | Only 8.1 | `ppa:ondrej/php` |
+| Composer | 2.2, and it pulls in php8.1 | Official composer at `/usr/local/bin/composer` |
+| Node.js | 12, too old for Vite | Node.js 20 in `/opt/dpanel`, linked into `/usr/local/bin` |
+| Rust | No `rustup` package | The official rustup installer |
+| Tesseract (image OCR) | 4.1; drust needs 5 | `ppa:alex-p/tesseract-ocr5`. Set `DRUST_TESSERACT_PPA=0` to skip it; drust then builds without OCR |
+
+Website installers (Laravel, Drupal, and others) look for `composer` and `npm`
+in `/usr/local/bin` first, then `/usr/bin`. If an app install fails with
+`composer is not installed` or `npm is not installed`, run
+`sudo dpanel chain update`. See [Websites and Apps](websites.md) for how
+these tools are used.
 
 ## Install dPanel
 
@@ -67,7 +85,48 @@ Update an existing server the same way:
 ```bash
 sudo ./installer.sh update                           # to the latest release
 sudo env DPANEL_VERSION=v1.3.0 ./installer.sh update # to one release
+sudo env DPANEL_VERSION=main ./installer.sh update   # unreleased fixes on main
 ```
+
+`update` with no version installs the **latest release tag**, not the newest
+commit. A fix that is merged to `main` reaches servers only after a new tag is
+published, or when you update with `DPANEL_VERSION=main`.
+
+> **`installer.sh update` vs `dpanel chain update`**
+>
+> | Command | Downloads new code? | Use it when |
+> | --- | --- | --- |
+> | `sudo ./installer.sh update` | Yes, the selected version | You want a new release or a fix from `main` |
+> | `sudo dpanel chain update` | No, re-runs the code already in `/var/www/dscript` | You want to repeat or repair the update steps |
+>
+> If you no longer have `installer.sh`, download it again:
+>
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o /tmp/installer.sh
+> sudo bash /tmp/installer.sh --version main update
+> ```
+
+During an update the chain asks about each module, for example
+`Module mariadb is installed (1.1.0). Update it now? [Y/n/skip]`. Press Enter
+or `y` to update it, or `n`/`skip` to leave it and go on to the next module.
+Without a terminal the default answer is used.
+
+An update runs these steps in order:
+
+1. Copies the selected release into `/var/www/dscript`, `/var/www/drust`, and
+   `/var/www/dpanel`.
+2. Updates each installed module.
+3. Rebuilds drust (`cargo build --release`) and restarts `drust.service` and
+   `edge-gateway.service`. If the build fails, the old binary keeps running.
+4. Refreshes the panel: installs or updates composer, runs `composer install`
+   and `php artisan migrate --force`, makes sure Node.js 20+ is installed, and
+   runs `npm run build`.
+5. Repairs website ownership, records the version in `.env`, rebuilds the
+   config cache, and fixes app permissions.
+
+Steps 3 to 5 log a warning when they fail, and the update continues. Check the
+output for `[WARN]` lines. A module that fails in step 2 stops the chain, and
+the later steps do not run; see [Troubleshooting](troubleshooting.md#install-and-update).
 
 ### The version is recorded automatically
 
@@ -88,7 +147,12 @@ sudo grep -E '^(APP_VERSION|DPANEL_RELEASE_)' /var/www/dpanel/.env
 
 ### Publishing a release (maintainers)
 
-Push a version tag. Nothing else is needed. A GitHub Release is optional.
+Change the number in the `VERSION` file at the repository root and merge that
+change into `main`. The `Release` GitHub Actions workflow then creates the tag
+and a GitHub Release with generated notes, and `latest` installs it from then
+on. A version that already has a release is left alone.
+
+Pushing a tag by hand still works too:
 
 ```bash
 git tag -a v1.2.3 -m "dPanel 1.2.3"
@@ -204,6 +268,9 @@ sudo dpanel doctor
 
 ## Next steps
 
+- [Quick Reference](quick-reference.md): the most-used commands by task
+- [Docker](docker.md): optional add-on. The installer does not install Docker; add it with `sudo dpanel docker`
+- [Troubleshooting](troubleshooting.md): find an error message and its fix
 - [Operations](operations.md): everyday commands and troubleshooting
 - [dscript CLI](dscript.md): the full `dpanel` command reference
 - [Security Policy](../SECURITY.md): hardening checklist for public servers

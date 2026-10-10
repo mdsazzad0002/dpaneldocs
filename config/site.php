@@ -39,6 +39,7 @@ return [
     'docs_branch' => env('DOCS_BRANCH', 'main'),
 
     'install_command' => "curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o installer.sh\nchmod +x installer.sh\nsudo ./installer.sh",
+    'development_command' => "git add .\ngit commit -m 'Update docs'\ngit pull origin main\ngit push origin main\ncd /var/www/dpanel && sudo npm run build \nsudo /var/www/drust/deploy/install-service.sh",
 
     'docs' => [
         'Getting started' => [
@@ -93,6 +94,90 @@ return [
         ],
     ],
 
+    /*
+    | Development machines visitors can help buy. Shown as icons on the home
+    | page; each one links to /donate/pc/{slug}. Prices are estimates in BDT.
+    */
+    'pcs' => [
+        'ryzen-5-5600g' => [
+            'name' => 'Starter build',
+            'specs' => 'AMD Ryzen 5 5600G · 16 GB RAM · 512 GB NVMe',
+            'price' => 45000,
+            'use' => 'A quiet everyday machine for writing code and docs.',
+        ],
+        'intel-i5-12400' => [
+            'name' => 'Office build',
+            'specs' => 'Intel Core i5-12400 · 16 GB RAM · 512 GB NVMe',
+            'price' => 55000,
+            'use' => 'Runs the panel, the queue and a test site side by side.',
+        ],
+        'beelink-ser7' => [
+            'name' => 'Mini PC',
+            'specs' => 'Ryzen 7 7840HS mini PC · 32 GB RAM · 1 TB NVMe',
+            'price' => 70000,
+            'use' => 'A small always-on box for nightly installer tests.',
+        ],
+        'ryzen-5-7600' => [
+            'name' => 'DDR5 build',
+            'specs' => 'AMD Ryzen 5 7600 · 32 GB DDR5 · 1 TB NVMe',
+            'price' => 75000,
+            'use' => 'Fast Rust builds for drust and the edge gateway.',
+        ],
+        'intel-i5-13400' => [
+            'name' => 'Balanced build',
+            'specs' => 'Intel Core i5-13400 · 32 GB RAM · 1 TB NVMe',
+            'price' => 80000,
+            'use' => 'Several virtual servers for upgrade and migration tests.',
+        ],
+        'mac-mini-m4' => [
+            'name' => 'Mac mini',
+            'specs' => 'Apple Mac mini M4 · 16 GB RAM · 256 GB SSD',
+            'price' => 85000,
+            'use' => 'Checks the panel UI in Safari and on macOS.',
+        ],
+        'dell-poweredge-t150' => [
+            'name' => 'Test server',
+            'specs' => 'Dell PowerEdge T150 · Xeon E-2314 · 32 GB ECC · 2 TB',
+            'price' => 90000,
+            'use' => 'Real server hardware to test dPanel the way you run it.',
+        ],
+        'ryzen-7-7700' => [
+            'name' => 'Developer build',
+            'specs' => 'AMD Ryzen 7 7700 · 32 GB DDR5 · 1 TB NVMe',
+            'price' => 95000,
+            'use' => 'The main daily driver for building new features.',
+        ],
+        'intel-i7-13700' => [
+            'name' => 'Power build',
+            'specs' => 'Intel Core i7-13700 · 32 GB DDR5 · 2 TB NVMe',
+            'price' => 110000,
+            'use' => 'Full test suites and release builds in minutes.',
+        ],
+        'ryzen-9-7900' => [
+            'name' => 'Workstation',
+            'specs' => 'AMD Ryzen 9 7900 · 64 GB DDR5 · 2 TB NVMe',
+            'price' => 140000,
+            'use' => 'Many test servers at once across every supported Linux.',
+        ],
+    ],
+
+    /*
+    | Fixed donation accounts shown on every /donate/pc/{slug} page.
+    */
+    'donation_accounts' => [
+        [
+            'label' => 'Dutch-Bangla Bank',
+            'type' => 'Bank transfer',
+            'details' => [
+                'Bank' => 'Dutch-Bangla Bank PLC',
+                'Account name' => 'MD SAZZAD',
+                'Account number' => '1641580479038',
+                'Branch' => 'Mirpur 6, Dhaka, Bangladesh',
+            ],
+            'copy' => ['Account number'],
+        ],
+    ],
+
     'faq' => [
         [
             'q' => 'Is dPanel really free?',
@@ -100,7 +185,7 @@ return [
         ],
         [
             'q' => 'What server do I need?',
-            'a' => 'A fresh Linux server you control with sudo or root access, ports 80 and 443 open to the internet, and a domain name for the panel, for example panel.example.com.',
+            'a' => 'A fresh Linux ubuntu server you control with sudo or root access, ports 80 and 443 open to the internet, and a domain name for the panel, for example panel.example.com.',
         ],
         [
             'q' => 'How do I update dPanel?',

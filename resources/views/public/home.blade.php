@@ -103,17 +103,32 @@
             @endif
         </div>
 
-        <div class="mx-auto mt-14 max-w-3xl overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-left shadow-2xl shadow-blue-900/10">
-            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
-                <div class="flex items-center gap-1.5">
-                    <span class="h-3 w-3 rounded-full bg-slate-700"></span>
-                    <span class="h-3 w-3 rounded-full bg-slate-700"></span>
-                    <span class="h-3 w-3 rounded-full bg-slate-700"></span>
-                    <span class="ml-3 font-mono text-xs text-slate-500">Install on a fresh server</span>
+        <div class="mx-auto mt-14 grid max-w-8xl gap-6 md:grid-cols-2">
+            <div class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-left shadow-2xl shadow-blue-900/10">
+                <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="ml-3 font-mono text-xs text-slate-500">Install & update</span>
+                    </div>
+                    <button type="button" data-copy="#install-command" class="rounded-md border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">Copy</button>
                 </div>
-                <button type="button" data-copy="#install-command" class="rounded-md border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">Copy</button>
+                <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command">{{ config('site.install_command') }}</code></pre>
             </div>
-            <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command">{{ config('site.install_command') }}</code></pre>
+
+            <div class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-left shadow-2xl shadow-blue-900/10">
+                <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="ml-3 font-mono text-xs text-slate-500">Deploy & development</span>
+                    </div>
+                    <button type="button" data-copy="#install-command-2" class="rounded-md border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">Copy</button>
+                </div>
+                <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command-2">{{ config('site.development_command') }}</code></pre>
+            </div>
         </div>
     </div>
 </section>
@@ -140,6 +155,32 @@
         </div>
     </div>
 </section>
+
+{{-- PCs to donate --}}
+@if ($pcs)
+<section id="pcs" class="scroll-mt-16 border-t border-slate-200 bg-gradient-to-b from-amber-50 to-white py-20 dark:border-slate-800 dark:from-amber-950/20 dark:to-slate-950 sm:py-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="text-sm font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Support dPanel</p>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Help us buy a development PC</h2>
+            <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">dPanel is built on an old machine. Pick a PC below to see what it is for and how to donate towards it.</p>
+        </div>
+
+        <div class="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            @foreach ($pcs as $slug => $pc)
+                <a href="{{ route('donate.pc', $slug) }}" class="group flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 text-center transition hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-200/40 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-amber-500 dark:hover:shadow-none">
+                    <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition group-hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-400">
+                        @include('public.partials.pc-icon', ['class' => 'h-8 w-8'])
+                    </span>
+                    <span class="mt-4 font-semibold">{{ $pc['name'] }}</span>
+                    <span class="mt-1 text-xs leading-5 text-slate-500">{{ $pc['specs'] }}</span>
+                    <span class="mt-3 text-sm font-semibold text-amber-600 dark:text-amber-400">{{ \App\Support\Donations::format((float) $pc['price'], 'BDT') }}</span>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
 
 {{-- Architecture --}}
 <section class="border-y border-slate-200 bg-slate-50 py-20 dark:border-slate-800 dark:bg-slate-900/40 sm:py-24">

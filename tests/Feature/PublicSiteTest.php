@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Donation;
 use App\Models\Review;
 use App\Support\Docs;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +39,48 @@ class PublicSiteTest extends TestCase
             ->assertSee('href="/docs/operations"', false)
             ->assertDontSee('operations.md', false)
             ->assertSee('id="install-dpanel"', false);
+    }
+
+    public function test_home_links_each_pc_to_its_donation_page(): void
+    {
+        $home = $this->get('/')->assertOk();
+
+        foreach (config('site.pcs') as $slug => $pc) {
+            $home->assertSee(route('donate.pc', $slug), false);
+
+            $this->get(route('donate.pc', $slug))
+                ->assertOk()
+                ->assertSee($pc['name'])
+                ->assertSee('1641580479038')
+                ->assertSee('Dutch-Bangla Bank');
+        }
+    }
+
+    public function test_donation_reported_from_a_pc_page_is_tagged_with_that_pc(): void
+    {
+        $this->get(route('donate.pc', 'beelink-ser7'))
+            ->assertOk()
+            ->assertSee('name="pc" value="beelink-ser7"', false)
+            ->assertSee('id="report"', false);
+
+        $this->post(route('donate.store'), [
+            'name' => 'Rahim',
+            'amount' => 1000,
+            'transaction_id' => 'TRX-1',
+            'message' => 'Good luck',
+            'pc' => 'beelink-ser7',
+        ])->assertRedirect(route('donate.pc', 'beelink-ser7').'#report');
+
+        $this->assertSame("For: Mini PC\nGood luck", Donation::firstOrFail()->message);
+
+        $this->post(route('donate.store'), [
+            'name' => 'Rahim', 'amount' => 1000, 'transaction_id' => 'TRX-2', 'pc' => 'not-a-pc',
+        ])->assertSessionHasErrors('pc');
+    }
+
+    public function test_unknown_pc_returns_404(): void
+    {
+        $this->get('/donate/pc/does-not-exist')->assertNotFound();
     }
 
     public function test_unknown_doc_returns_404(): void

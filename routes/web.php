@@ -35,6 +35,7 @@ Route::post('/docs/comments', [CommentController::class, 'store'])->middleware('
 
 Route::get('/donate', [DonateController::class, 'index'])->name('donate.index');
 Route::post('/donate', [DonateController::class, 'store'])->middleware('throttle:5,10')->name('donate.store');
+Route::get('/donate/pc/{slug}', [DonateController::class, 'pc'])->where('slug', '[a-z0-9-]+')->name('donate.pc');
 
 Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 Route::post('/reviews', [ReviewController::class, 'store'])->middleware('throttle:3,10')->name('reviews.store');

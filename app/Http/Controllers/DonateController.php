@@ -7,6 +7,7 @@ use App\Models\DonationMethod;
 use App\Support\Donations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -14,15 +15,17 @@ class DonateController extends Controller
 {
     public function index(): View
     {
-        $goal = Donations::goal();
+        return $this->page();
+    }
 
-        abort_unless($goal['enabled'], 404);
+    /**
+     * The donate page with one of the suggested PCs from config/site.php selected.
+     */
+    public function pc(string $slug): View
+    {
+        abort_unless(is_array(config("site.pcs.{$slug}")), 404);
 
-        return view('public.donate', [
-            'goal' => $goal,
-            'methods' => DonationMethod::active()->get(),
-            'supporters' => Donation::verified()->where('is_public', true)->latest('verified_at')->limit(12)->get(),
-        ]);
+        return $this->page($slug);
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,8 +40,15 @@ class DonateController extends Controller
             'transaction_id' => ['required', 'string', 'max:120'],
             'message' => ['nullable', 'string', 'max:1000'],
             'is_public' => ['boolean'],
+            'pc' => ['nullable', Rule::in(array_keys(config('site.pcs')))],
             'website' => ['prohibited'],
         ]);
+
+        $pc = Arr::pull($data, 'pc');
+
+        if ($pc) {
+            $data['message'] = trim('For: '.config("site.pcs.{$pc}.name")."\n".($data['message'] ?? ''));
+        }
 
         Donation::create($data + [
             'currency' => Donations::setting('donation.currency'),
@@ -48,7 +58,30 @@ class DonateController extends Controller
         ]);
 
         return redirect()
-            ->to(route('donate.index').'#report')
+            ->to(($pc ? route('donate.pc', $pc) : route('donate.index')).'#report')
             ->with('status', 'Thank you! We will check the transfer and add it to the goal shortly.');
+    }
+
+    private function page(?string $selectedPc = null): View
+    {
+        $goal = Donations::goal();
+
+        abort_unless($goal['enabled'], 404);
+
+        $accounts = config('site.donation_accounts');
+        $staticNumbers = collect($accounts)->pluck('details.Account number')->filter()->all();
+
+        return view('public.donate', [
+            'goal' => $goal,
+            'pcs' => config('site.pcs'),
+            'selectedPc' => $selectedPc,
+            'pc' => $selectedPc ? config("site.pcs.{$selectedPc}") : null,
+            'accounts' => $accounts,
+            'methods' => DonationMethod::active()
+                ->where(fn ($query) => $query->whereNull('account_number')->orWhereNotIn('account_number', $staticNumbers))
+                ->get(),
+            'reportMethods' => DonationMethod::active()->get(),
+            'supporters' => Donation::verified()->where('is_public', true)->latest('verified_at')->limit(12)->get(),
+        ]);
     }
 }
