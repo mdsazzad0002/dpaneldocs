@@ -1,9 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import Modal from '@/Components/Modal.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
 const props = defineProps({
     donations: Object,
@@ -11,8 +9,6 @@ const props = defineProps({
     counts: Object,
     goal: Object,
     settings: Object,
-    methods: Array,
-    methodTypes: Object,
 });
 
 const tabs = [
@@ -43,34 +39,6 @@ const settingsForm = useForm({
     thank_you: props.settings.thank_you,
 });
 const saveSettings = () => settingsForm.put(route('admin.donations.settings'), { preserveScroll: true });
-
-// Payment methods (bank accounts, mobile wallets)
-const blankMethod = { type: 'bank', label: '', bank_name: '', account_name: '', account_number: '', branch: '', routing_number: '', swift_code: '', instructions: '', is_active: true, sort_order: 0 };
-const methodForm = useForm({ ...blankMethod });
-const editingMethod = ref(null);
-const showingMethod = ref(false);
-
-const openMethod = (method = null) => {
-    editingMethod.value = method;
-    methodForm.clearErrors();
-    Object.assign(methodForm, method ? Object.fromEntries(Object.keys(blankMethod).map((k) => [k, method[k] ?? blankMethod[k]])) : { ...blankMethod, sort_order: props.methods.length });
-    showingMethod.value = true;
-};
-
-const saveMethod = () => {
-    const options = { preserveScroll: true, onSuccess: () => (showingMethod.value = false) };
-    if (editingMethod.value) {
-        methodForm.put(route('admin.donation-methods.update', editingMethod.value.id), options);
-    } else {
-        methodForm.post(route('admin.donation-methods.store'), options);
-    }
-};
-
-const destroyMethod = (method) => {
-    if (confirm(`Remove "${method.label}" from the donate page?`)) {
-        router.delete(route('admin.donation-methods.destroy', method.id), { preserveScroll: true });
-    }
-};
 
 const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950';
 </script>
@@ -150,25 +118,6 @@ const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text
                 </section>
 
                 <div class="space-y-6">
-                    <!-- Bank accounts / payment methods -->
-                    <section class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-                        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-                            <h3 class="font-semibold">Bank &amp; payment details</h3>
-                            <button type="button" class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700" @click="openMethod()">Add</button>
-                        </div>
-                        <ul class="divide-y divide-slate-100 dark:divide-slate-800">
-                            <li v-for="method in methods" :key="method.id" class="flex items-start gap-3 px-5 py-3">
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium">{{ method.label }} <span v-if="!method.is_active" class="ml-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-700 dark:text-slate-300">hidden</span></p>
-                                    <p class="truncate text-xs text-slate-500">{{ methodTypes[method.type] }} · {{ [method.bank_name, method.account_name, method.account_number].filter(Boolean).join(' · ') }}</p>
-                                </div>
-                                <button type="button" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400" @click="openMethod(method)">Edit</button>
-                                <button type="button" class="text-sm font-medium text-red-600 hover:underline" @click="destroyMethod(method)">Remove</button>
-                            </li>
-                            <li v-if="!methods.length" class="px-5 py-8 text-center text-sm text-slate-500">Add your bank account or bKash/Nagad number so people know where to send money.</li>
-                        </ul>
-                    </section>
-
                     <!-- Goal settings -->
                     <form class="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900" @submit.prevent="saveSettings">
                         <div class="flex items-center justify-between">
@@ -214,68 +163,5 @@ const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text
                 </div>
             </div>
         </div>
-
-        <Modal :show="showingMethod" max-width="xl" @close="showingMethod = false">
-            <form class="space-y-4 p-6" @submit.prevent="saveMethod">
-                <h3 class="text-lg font-semibold">{{ editingMethod ? 'Edit payment method' : 'Add payment method' }}</h3>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="block text-sm">
-                        <span class="mb-1 block font-medium">Type</span>
-                        <select v-model="methodForm.type" :class="input">
-                            <option v-for="(label, key) in methodTypes" :key="key" :value="key">{{ label }}</option>
-                        </select>
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block font-medium">Label</span>
-                        <input v-model="methodForm.label" required maxlength="80" :class="input" :placeholder="methodForm.type === 'mobile' ? 'bKash (personal)' : 'Dutch-Bangla Bank'" />
-                        <span v-if="methodForm.errors.label" class="mt-1 block text-xs text-red-600">{{ methodForm.errors.label }}</span>
-                    </label>
-                    <label v-if="methodForm.type === 'bank'" class="block text-sm">
-                        <span class="mb-1 block font-medium">Bank name</span>
-                        <input v-model="methodForm.bank_name" maxlength="120" :class="input" />
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block font-medium">Account name</span>
-                        <input v-model="methodForm.account_name" maxlength="120" :class="input" />
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block font-medium">{{ methodForm.type === 'mobile' ? 'Phone number' : 'Account number' }}</span>
-                        <input v-model="methodForm.account_number" maxlength="80" class="font-mono" :class="input" />
-                    </label>
-                    <template v-if="methodForm.type === 'bank'">
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium">Branch</span>
-                            <input v-model="methodForm.branch" maxlength="120" :class="input" />
-                        </label>
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium">Routing number</span>
-                            <input v-model="methodForm.routing_number" maxlength="40" class="font-mono" :class="input" />
-                        </label>
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium">SWIFT / BIC</span>
-                            <input v-model="methodForm.swift_code" maxlength="20" class="font-mono" :class="input" />
-                        </label>
-                    </template>
-                </div>
-                <label class="block text-sm">
-                    <span class="mb-1 block font-medium">Instructions <span class="font-normal text-slate-400">(optional)</span></span>
-                    <textarea v-model="methodForm.instructions" rows="3" :class="input" placeholder="e.g. Use “Send Money”, and write “dPanel” as the reference." />
-                </label>
-                <div class="flex flex-wrap items-center gap-4">
-                    <label class="flex items-center gap-2 text-sm">
-                        <input v-model="methodForm.is_active" type="checkbox" class="rounded border-slate-300 text-blue-600 dark:border-slate-700 dark:bg-slate-900" />
-                        Show on the donate page
-                    </label>
-                    <label class="flex items-center gap-2 text-sm">
-                        Order
-                        <input v-model="methodForm.sort_order" type="number" min="0" class="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950" />
-                    </label>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" @click="showingMethod = false">Cancel</button>
-                    <button type="submit" :disabled="methodForm.processing" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">Save</button>
-                </div>
-            </form>
-        </Modal>
     </AuthenticatedLayout>
 </template>

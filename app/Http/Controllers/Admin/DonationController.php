@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Donation;
-use App\Models\DonationMethod;
 use App\Models\Setting;
 use App\Support\Donations;
 use App\Support\Outbox;
@@ -31,8 +30,6 @@ class DonationController extends Controller
             'counts' => Donation::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
             'goal' => Donations::goal(),
             'settings' => collect(Donations::DEFAULTS)->mapWithKeys(fn ($default, $key) => [str_replace('donation.', '', $key) => Donations::setting($key)]),
-            'methods' => DonationMethod::orderBy('sort_order')->orderBy('id')->get(),
-            'methodTypes' => DonationMethod::TYPES,
         ]);
     }
 
