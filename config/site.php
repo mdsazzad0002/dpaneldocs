@@ -39,7 +39,9 @@ return [
     'docs_branch' => env('DOCS_BRANCH', 'main'),
 
     'install_command' => "curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o installer.sh\nchmod +x installer.sh\nsudo ./installer.sh",
-    'development_command' => "git add .\ngit commit -m 'Update docs'\ngit pull origin main\ngit push origin main\ncd /var/www/dpanel && sudo npm run build \nsudo /var/www/drust/deploy/install-service.sh",
+    'development_command_pull' => "cd /var/www\ngit pull origin main\nsudo npm run build \nsudo /var/www/drust/deploy/install-service.sh",
+
+    'development_command_push' => "cd /var/www\ngit add .\ngit commit -m 'Update docs'\ngit pull origin main\ngit push origin main",
 
     'docs' => [
         'Getting started' => [

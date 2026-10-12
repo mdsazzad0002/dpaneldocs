@@ -103,7 +103,7 @@
             @endif
         </div>
 
-        <div class="mx-auto mt-14 grid max-w-8xl gap-6 md:grid-cols-2">
+        <div class="mx-auto mt-14 grid max-w-8xl gap-6 ">
             <div class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-left shadow-2xl shadow-blue-900/10">
                 <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
                     <div class="flex items-center gap-1.5">
@@ -123,11 +123,23 @@
                         <span class="h-3 w-3 rounded-full bg-slate-700"></span>
                         <span class="h-3 w-3 rounded-full bg-slate-700"></span>
                         <span class="h-3 w-3 rounded-full bg-slate-700"></span>
-                        <span class="ml-3 font-mono text-xs text-slate-500">Deploy & development</span>
+                        <span class="ml-3 font-mono text-xs text-slate-500">Deploy & development Pull</span>
                     </div>
                     <button type="button" data-copy="#install-command-2" class="rounded-md border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">Copy</button>
                 </div>
-                <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command-2">{{ config('site.development_command') }}</code></pre>
+                <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command-2">{{ config('site.development_command_pull') }}</code></pre>
+            </div>
+             <div class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-left shadow-2xl shadow-blue-900/10">
+                <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="h-3 w-3 rounded-full bg-slate-700"></span>
+                        <span class="ml-3 font-mono text-xs text-slate-500">Deploy & development Push</span>
+                    </div>
+                    <button type="button" data-copy="#install-command-2" class="rounded-md border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">Copy</button>
+                </div>
+                <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-7 text-slate-100"><code id="install-command-2">{{ config('site.development_command_push') }}</code></pre>
             </div>
         </div>
     </div>
