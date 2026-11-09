@@ -39,7 +39,7 @@ return [
     'docs_branch' => env('DOCS_BRANCH', 'main'),
 
     'install_command' => "curl -fsSL https://raw.githubusercontent.com/mdsazzad0002/dpanel/main/installer.sh -o installer.sh\nchmod +x installer.sh\nsudo ./installer.sh",
-    'development_command_pull' => "cd /var/www\ngit pull origin main\ncd /var/www/dpanel \nsudo npm run build \nsudo /var/www/drust/deploy/install-service.sh",
+    'development_command_pull' => "cd /var/www\ngit pull origin main\ncd /var/www/dpanel \nsudo npm install && sudo npm run build \nsudo /var/www/drust/deploy/install-service.sh",
 
     'development_command_push' => "cd /var/www\ngit add .\ngit commit -m 'Update docs'\ngit pull origin main\ngit push origin main",
 
@@ -49,9 +49,29 @@ return [
                 'title' => 'Installation',
                 'description' => 'Install dPanel on a fresh Linux server, choose a release, and set up website file permissions.',
             ],
+            'supported-distributions' => [
+                'title' => 'Supported Distributions',
+                'description' => 'Which Linux distributions dPanel supports natively, their package stacks, and support boundaries.',
+            ],
+            'windows' => [
+                'title' => 'dPanel on Windows',
+                'description' => 'Native Windows status and how to set up a dPanel development environment on a Windows PC.',
+            ],
             'architecture' => [
                 'title' => 'Architecture',
                 'description' => 'How the Laravel panel, the drust privileged API, and the Rust edge gateway fit together.',
+            ],
+            'quick-reference' => [
+                'title' => 'Quick Reference',
+                'description' => 'The most-used dPanel commands, grouped by task.',
+            ],
+            'troubleshooting' => [
+                'title' => 'Troubleshooting',
+                'description' => 'Common dPanel error messages and how to fix them.',
+            ],
+            'websites' => [
+                'title' => 'Websites and Apps',
+                'description' => 'App installers, Quick Actions, Git deploys, Composer, and npm builds for hosted sites.',
             ],
             'operations' => [
                 'title' => 'Operations',
@@ -71,13 +91,29 @@ return [
                 'title' => 'drust API',
                 'description' => 'Endpoint reference for the localhost-only drust execution API used by the panel.',
             ],
+            'local-llm' => [
+                'title' => 'Local LLM Runner',
+                'description' => 'Run GGUF models on the server for the AI Gateway with drust-llm.',
+            ],
             'backups' => [
                 'title' => 'Backups',
                 'description' => 'Schedule dPanel backups, upload them to remote storage, and restore them.',
             ],
+            'docker' => [
+                'title' => 'Docker',
+                'description' => 'The optional Docker add-on: cost, install, panel pages, security, and removal.',
+            ],
             'ssh-command-runner' => [
                 'title' => 'Server Task Runner',
                 'description' => 'SSH connector, command safety rules, and task reports in the Server Task Runner.',
+            ],
+            'mcp' => [
+                'title' => 'MCP Access',
+                'description' => 'Connect AI clients to dPanel over MCP: tokens, tools, and command safety.',
+            ],
+            'ai-gateway' => [
+                'title' => 'AI Gateway Images',
+                'description' => 'Images in AI Gateway chat (vision or OCR), image generation, and the image API.',
             ],
             'whmcs' => [
                 'title' => 'WHMCS Integration',
@@ -85,6 +121,10 @@ return [
             ],
         ],
         'Project' => [
+            'screenshots' => [
+                'title' => 'Screenshots',
+                'description' => 'A visual tour of every dPanel admin page, from websites and email to security and the AI Gateway.',
+            ],
             'contributing' => [
                 'title' => 'Contributing',
                 'description' => 'Clone dPanel, run the installer from your checkout, and open a pull request.',

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Donation;
 use App\Models\Review;
 use App\Support\Docs;
+use App\Support\DocsSync;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -39,6 +40,39 @@ class PublicSiteTest extends TestCase
             ->assertSee('href="/docs/operations"', false)
             ->assertDontSee('operations.md', false)
             ->assertSee('id="install-dpanel"', false);
+    }
+
+    public function test_html_layout_blocks_render_as_markdown_with_repository_images(): void
+    {
+        $markdown = <<<'MD'
+        # Tour
+
+        <p align="center">
+          <img src="images/dashboard.png" alt="Dashboard" width="100%">
+        </p>
+
+        <table>
+          <tr>
+            <td width="50%" valign="top">
+              <h4>File manager</h4>
+              Edit <code>php.ini</code>. See the <a href="backups.md">Backups guide</a>.
+            </td>
+          </tr>
+        </table>
+
+        ```html
+        <p>kept</p>
+        ```
+        MD;
+
+        $html = Docs::render($markdown)['html'];
+        $imageBase = DocsSync::rawBaseUrl(config('site.docs_branch')).'/docs/images/';
+
+        $this->assertStringContainsString('<img src="'.$imageBase.'dashboard.png" alt="Dashboard" />', $html);
+        $this->assertStringContainsString('File manager', $html);
+        $this->assertStringContainsString('<code>php.ini</code>', $html);
+        $this->assertStringContainsString('href="/docs/backups"', $html);
+        $this->assertStringContainsString('&lt;p&gt;kept&lt;/p&gt;', $html);
     }
 
     public function test_home_links_each_pc_to_its_donation_page(): void

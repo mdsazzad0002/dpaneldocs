@@ -8,6 +8,7 @@ use League\CommonMark\Environment\Environment;
 use League\CommonMark\Event\DocumentParsedEvent;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
@@ -186,6 +187,8 @@ class Docs
             foreach ($event->getDocument()->iterator() as $node) {
                 if ($node instanceof Link) {
                     $node->setUrl(self::rewriteUrl($node->getUrl()));
+                } elseif ($node instanceof Image) {
+                    $node->setUrl(self::rewriteImageUrl($node->getUrl()));
                 }
             }
         }, 100);
@@ -218,12 +221,97 @@ class Docs
      */
     private static function strip(string $markdown): string
     {
-        $markdown = str_replace("\r\n", "\n", $markdown);
+        $markdown = self::convertHtmlBlocks(str_replace("\r\n", "\n", $markdown));
         $markdown = preg_replace('/\A\s*#\s+[^\n]*\n/', '', $markdown) ?? $markdown;
         $markdown = preg_replace('/^##\s+Contents\s*\n.*?(?=^##\s)/ms', '', $markdown) ?? $markdown;
         $markdown = preg_replace('/\A\s*>\s*Part of the \[dPanel documentation\].*?\n\n/s', '', $markdown) ?? $markdown;
 
         return ltrim($markdown);
+    }
+
+    /**
+     * Raw HTML is stripped when rendering, so turn the HTML blocks some pages
+     * use for layout (<p align>, <table>, <details>, <img>) into Markdown that
+     * keeps their text, headings, links, and images. Code fences are left alone.
+     */
+    private static function convertHtmlBlocks(string $markdown): string
+    {
+        $output = [];
+        $inFence = false;
+        $inHtmlBlock = false;
+
+        foreach (explode("\n", $markdown) as $line) {
+            if (! $inHtmlBlock && preg_match('/^\s{0,3}(```|~~~)/', $line)) {
+                $inFence = ! $inFence;
+            }
+
+            if ($inFence) {
+                $output[] = $line;
+
+                continue;
+            }
+
+            if (! $inHtmlBlock && preg_match('#^\s{0,3}</?(div|p|details|summary|table|thead|tbody|tr|td|th|h[1-6]|img|br)\b#i', $line)) {
+                $inHtmlBlock = true;
+            }
+
+            if (! $inHtmlBlock) {
+                $output[] = $line;
+
+                continue;
+            }
+
+            if (trim($line) === '') {
+                $inHtmlBlock = false;
+                $output[] = '';
+
+                continue;
+            }
+
+            $converted = self::htmlLineToMarkdown($line);
+
+            if ($converted !== '') {
+                array_push($output, $converted, '');
+            }
+        }
+
+        return implode("\n", $output);
+    }
+
+    private static function htmlLineToMarkdown(string $line): string
+    {
+        $line = preg_replace('#<summary\b.*?</summary>#is', '', $line) ?? $line;
+
+        $line = preg_replace_callback('#<h([1-6])\b[^>]*>(.*?)</h\1>#is', fn ($m) => str_repeat('#', (int) $m[1]).' '.trim($m[2]), $line) ?? $line;
+
+        $line = preg_replace_callback('#<img\b[^>]*>#i', function ($m) {
+            preg_match('#\bsrc\s*=\s*"([^"]*)"#i', $m[0], $src);
+            preg_match('#\balt\s*=\s*"([^"]*)"#i', $m[0], $alt);
+
+            return isset($src[1]) ? '!['.($alt[1] ?? '').']('.$src[1].')' : '';
+        }, $line) ?? $line;
+
+        $line = preg_replace_callback('#<a\b[^>]*\bhref\s*=\s*"([^"]*)"[^>]*>(.*?)</a>#is', fn ($m) => '['.$m[2].']('.$m[1].')', $line) ?? $line;
+        $line = preg_replace('#</?(b|strong)>#i', '**', $line) ?? $line;
+        $line = preg_replace('#</?code>#i', '`', $line) ?? $line;
+        $line = preg_replace('#</?[a-z][a-z0-9]*\b[^>]*>#i', '', $line) ?? $line;
+
+        return trim($line);
+    }
+
+    /**
+     * Relative image paths (images/x.png) point at the docs folder of the
+     * dPanel repository, so screenshots do not have to be copied here.
+     */
+    public static function rewriteImageUrl(string $url): string
+    {
+        if ($url === '' || preg_match('#^([a-z][a-z0-9+.-]*:|/)#i', $url)) {
+            return $url;
+        }
+
+        $path = ltrim(preg_replace('#^(\./)+#', '', $url) ?? $url, '/');
+
+        return DocsSync::rawBaseUrl(config('site.docs_branch', 'main')).'/docs/'.$path;
     }
 
     public static function rewriteUrl(string $url): string
